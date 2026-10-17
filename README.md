@@ -4,7 +4,7 @@ A Windows front end for the [HVEPROM](https://github.com/inaxeon/hvepromcmd) EPR
 It replaces the command line tool with a graphical program: read, write, blank-check and verify EPROMs,
 edit the data in a hex editor, and burn just a section of a large file into a device.
 
-![HV-EPROM Programmer GUI](docs/HVEPROMGUI.png)
+![HV-EPROM Programmer GUI](images/HVEPROMGUI.png)
 
 ## Features
 
