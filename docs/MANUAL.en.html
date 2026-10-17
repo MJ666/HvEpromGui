@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HV-EPROM Programmer GUI - User Manual</title>
+<style>
+:root{--bg:#fff;--fg:#1f2328;--muted:#59636e;--line:#d1d9e0;--soft:#f6f8fa;--link:#0969da;--quote:#fff8c5}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--muted:#9198a1;--line:#3d444d;--soft:#161b22;--link:#4493f8;--quote:#2d2a12}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:32px 20px 64px}
+h1,h2,h3{line-height:1.25}
+h1{font-size:2em;border-bottom:1px solid var(--line);padding-bottom:.3em}
+h2{font-size:1.5em;border-bottom:1px solid var(--line);padding-bottom:.3em;margin-top:2em}
+h3{font-size:1.2em;margin-top:1.6em}
+a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
+code{background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:.1em .35em;font:.9em Consolas,"Courier New",monospace}
+pre{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre code{background:none;border:0;padding:0}
+blockquote{margin:1em 0;padding:.6em 1em;background:var(--quote);border-left:4px solid #d4a72c;border-radius:4px}
+blockquote p{margin:.3em 0}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;margin:1em 0}
+th,td{border:1px solid var(--line);padding:6px 12px;text-align:left;vertical-align:top}
+th{background:var(--soft)}
+hr{border:0;border-top:1px solid var(--line);margin:2em 0}
+li{margin:.2em 0}
+@media print{body{font-size:11pt}main{max-width:none;padding:0}a{color:inherit}}
+</style>
+</head>
+<body>
+<main>
+<h1 id="hv-eprom-programmer-gui---user-manual">HV-EPROM Programmer GUI - User Manual</h1>
+<p><strong>Version 1.0.0</strong> - Deutsche Fassung: <a href="HANDBUCH.de.html">HANDBUCH.de.md</a></p>
+<p>A Windows front end for the HVEPROM EPROM programmer by Matthew Millman. It replaces the command line tool
+<a href="https://github.com/inaxeon/hvepromcmd">hvepromcmd</a> with a graphical program that has a hex editor, checksums
+and the ability to burn sections of large files into an EPROM.</p>
+<blockquote>
+<p><strong>Status:</strong> the serial protocol was ported from the hvepromcmd source code. The program has been tested with
+<strong>2708 EPROMs: reading, writing and verifying work</strong>. The other device types follow the hvepromcmd logic as
+well but have not been tested on real hardware yet; try them with a device you can afford to lose.</p>
+</blockquote>
+<hr />
+<h2 id="1-contents">1. Contents</h2>
+<ol>
+<li><a href="#2-requirements-and-installation">Requirements and installation</a></li>
+<li><a href="#3-connecting-the-programmer">Connecting the programmer</a></li>
+<li><a href="#4-main-window">Main window</a></li>
+<li><a href="#5-supported-devices">Supported devices</a></li>
+<li><a href="#6-working-with-files-and-the-buffer">Working with files and the buffer</a></li>
+<li><a href="#7-burn-sections">Burn sections</a></li>
+<li><a href="#8-programmer-operations">Programmer operations</a></li>
+<li><a href="#9-hex-editor">Hex editor</a></li>
+<li><a href="#10-checksums">Checksums</a></li>
+<li><a href="#11-typical-workflows">Typical workflows</a></li>
+<li><a href="#12-troubleshooting">Troubleshooting</a></li>
+<li><a href="#13-safety-notes">Safety notes</a></li>
+<li><a href="#14-protocol-summary-for-developers">Protocol summary (for developers)</a></li>
+<li><a href="#15-building-versioning-license-changelog">Building, versioning, license, changelog</a></li>
+</ol>
+<hr />
+<h2 id="2-requirements-and-installation">2. Requirements and installation</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operating system</td>
+<td>Windows 10 or 11</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>.NET 8 Desktop Runtime (to build: .NET 8 SDK)</td>
+</tr>
+<tr>
+<td>Hardware</td>
+<td>HVEPROM programmer with its serial (USB) connection and the matching socket shield</td>
+</tr>
+<tr>
+<td>Supply</td>
+<td>12 V supply for the programmer (it measures its own supply voltage)</td>
+</tr>
+</tbody>
+</table>
+<p>Build and run:</p>
+<pre><code>dotnet build -c Release
+dotnet publish -c Release -r win-x64 --self-contained false
+</code></pre>
+<p>The documentation in the <code>docs</code> folder is copied next to the executable and can be opened from the
+<strong>Help</strong> menu (F1 = English manual). It opens as an HTML page in your web browser. The same text is also provided
+as Markdown (<code>.md</code>) files; the HTML pages are generated from them.</p>
+<hr />
+<h2 id="3-connecting-the-programmer">3. Connecting the programmer</h2>
+<ol>
+<li>Connect the programmer to the PC and switch on its 12 V supply.</li>
+<li>In the top bar choose the <strong>Port</strong>. The list shows the name that the Windows Device Manager uses, for example
+   <code>COM3 - Arduino Mega 2560</code> or <code>COM5 - USB Serial Port</code>. The names are looked up in the background, so the
+   plain <code>COMx</code> names appear first and the descriptions follow after a moment. The <strong>↻</strong> button rescans the ports,
+   for example after plugging in the cable.</li>
+<li>Choose the <strong>Baud</strong> rate (9600, 38400 or 115200). The default is <strong>38400</strong>, the same as the command line
+   tool; it must match the firmware of the programmer.</li>
+<li>Choose the <strong>Device</strong> (see <a href="#5-supported-devices">section 5</a>).</li>
+<li>Click <strong>Connect</strong>. The program opens the port (8 data bits, no parity, 1 stop bit, no handshake) and
+   measures the supply voltage; the result appears in the log. If the board does not answer immediately (boards
+   such as the Arduino reset when the port is opened) the program waits two seconds and tries once more.</li>
+<li><strong>Disconnect</strong> closes the port again. The port, baud rate and the <strong>Connect</strong> button are locked while an
+   operation is running.</li>
+</ol>
+<hr />
+<h2 id="4-main-window">4. Main window</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Menu bar</td>
+<td>File, Edit, View and Help commands</td>
+</tr>
+<tr>
+<td>Top bar</td>
+<td>Port, baud rate, device, connect button</td>
+</tr>
+<tr>
+<td>Center</td>
+<td>Hex editor with the buffer</td>
+</tr>
+<tr>
+<td>Right</td>
+<td><strong>Burn section</strong> and <strong>Programmer</strong> controls</td>
+</tr>
+<tr>
+<td>Bottom left</td>
+<td>Progress bar and log</td>
+</tr>
+<tr>
+<td>Bottom right</td>
+<td><strong>Checksums</strong></td>
+</tr>
+<tr>
+<td>Status bar</td>
+<td>Buffer size, cursor offset and value, selection</td>
+</tr>
+</tbody>
+</table>
+<p>The title bar shows the program version, the file name and a <code>*</code> when the buffer has unsaved changes.</p>
+<hr />
+<h2 id="5-supported-devices">5. Supported devices</h2>
+<p>The list follows hvepromcmd. "Fill" is the byte value of an unprogrammed cell that the program uses for the
+parts of the device image that are not covered by your data.</p>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Size</th>
+<th>Write mode</th>
+<th>Default</th>
+<th>Fill</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1702A</td>
+<td>256 B</td>
+<td>fixed passes</td>
+<td>32 passes</td>
+<td>00</td>
+</tr>
+<tr>
+<td>2704</td>
+<td>512 B</td>
+<td>fixed passes</td>
+<td>100 passes</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>2708</td>
+<td>1 KB</td>
+<td>fixed passes</td>
+<td>100 passes</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>TMS2716</td>
+<td>2 KB</td>
+<td>fixed passes</td>
+<td>100 passes</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>MCM6876x</td>
+<td>8 KB</td>
+<td>hit until set</td>
+<td>5 retry cycles</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8741</td>
+<td>1 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>00</td>
+</tr>
+<tr>
+<td>8742</td>
+<td>2 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>00</td>
+</tr>
+<tr>
+<td>8748</td>
+<td>1 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>00</td>
+</tr>
+<tr>
+<td>8749</td>
+<td>2 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>00</td>
+</tr>
+<tr>
+<td>8041</td>
+<td>1 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8042</td>
+<td>2 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8048</td>
+<td>1 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8049</td>
+<td>2 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8050</td>
+<td>4 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8755</td>
+<td>2 KB</td>
+<td>hit until set</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Write modes</strong></p>
+<ul>
+<li><strong>Fixed passes</strong> - the whole image is sent once per pass; the number of passes is set in <strong>Passes</strong>.</li>
+<li><strong>Hit until set</strong> - one pass in which the programmer itself repeats each byte until it reads back correctly.
+  After writing, the log shows the largest number of writes needed for a single byte and the total number of
+  writes. The checkbox <strong>Fixed passes instead of "hit until set" (-m)</strong> switches these devices to fixed passes
+  (corresponds to <code>-m</code> of the command line tool); then <strong>Passes</strong> is used. <strong>Retry cycles</strong> applies to the
+  MCM6876x only.</li>
+</ul>
+<p>Changing the device resets passes, retry cycles and the section to the defaults of that device. The buffer
+itself is kept.</p>
+<p><strong>Supply voltage check.</strong> Before every operation the programmer measures its 12 V supply. For the 2704 and 2708
+the value must be between 11.5 V and 13.0 V, for all other devices between 10 V and 14 V; otherwise the
+operation is refused.</p>
+<hr />
+<h2 id="6-working-with-files-and-the-buffer">6. Working with files and the buffer</h2>
+<p>The <strong>buffer</strong> is the image shown in the hex editor. It can be any size from 1 byte up to 16 MB; it is not tied
+to the size of the device.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>File &gt; Open (Ctrl+O)</td>
+<td>Loads <code>.bin</code>/<code>.rom</code> as raw bytes, or <code>.hex</code>/<code>.ihx</code> as Intel HEX. Intel HEX is placed at its real addresses from 0 to the highest used address, gaps are filled with FF.</td>
+</tr>
+<tr>
+<td>File &gt; New buffer (Ctrl+N)</td>
+<td>Empty buffer (FF / 00 depending on the device) with the size of the device.</td>
+</tr>
+<tr>
+<td>File &gt; Resize buffer</td>
+<td>Makes the buffer larger (padded with FF) or smaller (data at the end is lost, after confirmation). The size is entered in hex.</td>
+</tr>
+<tr>
+<td>File &gt; Save as BIN (Ctrl+S)</td>
+<td>Saves the whole buffer as raw bytes.</td>
+</tr>
+<tr>
+<td>File &gt; Save as Intel HEX</td>
+<td>Saves the whole buffer; addresses equal buffer offsets (extended linear address records above 64 KB).</td>
+</tr>
+<tr>
+<td>File &gt; Save section as BIN</td>
+<td>Saves only the current burn section.</td>
+</tr>
+</tbody>
+</table>
+<p>When the buffer is larger than the device, the log reminds you to choose a section or bank.</p>
+<hr />
+<h2 id="7-burn-sections">7. Burn sections</h2>
+<p>A <strong>section</strong> says which part of the buffer is written to which part of the device. It is the key to
+burning large files into small EPROMs.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Source offset (hex)</strong></td>
+<td>First byte of the section in the buffer</td>
+</tr>
+<tr>
+<td><strong>Length (hex)</strong></td>
+<td>Number of bytes</td>
+</tr>
+<tr>
+<td><strong>Device offset (hex)</strong></td>
+<td>Address inside the device where the first byte goes (normally 0)</td>
+</tr>
+</tbody>
+</table>
+<p>The section is highlighted yellow in the hex editor and summarised below the buttons, including the bank number
+(<code>bank 2/4</code> = the second device-sized block of the buffer). Invalid values (non-hex text, section beyond the end
+of the buffer or of the device) are shown in the same place.</p>
+<p>Buttons:</p>
+<ul>
+<li><strong>From selection</strong> (Ctrl+B) - uses the selected bytes as source. If the selection is larger than the device
+  it is shortened to fit.</li>
+<li><strong>◀ Bank / Bank ▶</strong> - moves the source offset by one device size and sets the length to a full device (or the
+  rest of the buffer). The device offset is reset to 0.</li>
+</ul>
+<p>By default (after loading a file or changing the device) the section is the first device-sized block of the
+buffer.</p>
+<p><strong>How a section is written.</strong> The program builds a complete device image: the area outside your section is
+filled with the "unprogrammed" value of the device (FF, or 00 for 8741/8742/8748/8749/1702A) and your section is
+copied in at the device offset. Because programming can only change cells from the erased to the programmed state,
+the area outside the section stays untouched on a blank device. This also allows you to burn <strong>several sections
+one after the other into the same device</strong> - turn <strong>Blank check before writing</strong> off for the second and later
+sections.</p>
+<p><strong>Verify</strong> compares only the section (device bytes from the device offset against buffer bytes from the source
+offset).</p>
+<p><strong>Read: insert into buffer at source offset.</strong> When this box is ticked, <strong>Read</strong> does not replace the buffer.
+Instead the device range (device offset, length) is copied into the buffer at the source offset; the buffer grows
+(FF padded) if needed. This is how you assemble one large image from several EPROMs.</p>
+<hr />
+<h2 id="8-programmer-operations">8. Programmer operations</h2>
+<p>All operations need a connection. While one is running, the <strong>Cancel</strong> button is active, a progress bar is shown and
+the editor stays usable. The log shows every step with a time stamp. After each operation (also after an error or
+a cancel) the program sends a reset to the programmer.</p>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Measure 12 V</strong></td>
+<td>Reads and checks the supply voltage.</td>
+</tr>
+<tr>
+<td><strong>Blank check</strong></td>
+<td>Checks if the whole device is blank; if not, the log shows the first non-blank offset and its value.</td>
+</tr>
+<tr>
+<td><strong>Read</strong></td>
+<td>Reads the whole device. By default the buffer is replaced by the device contents, the file name is cleared and the contents become the <em>reference</em> (see below). The CRC-32 of the data is logged. With <em>insert into buffer</em> only a range is inserted.</td>
+</tr>
+<tr>
+<td><strong>Verify section</strong></td>
+<td>Reads the device and compares the section. The first difference is selected in the editor and logged; the number of differing bytes is reported.</td>
+</tr>
+<tr>
+<td><strong>Write section</strong></td>
+<td>Asks for confirmation, checks the supply, optionally runs the blank check, writes the section and optionally verifies it.</td>
+</tr>
+<tr>
+<td><strong>Cancel</strong></td>
+<td>Stops after the current block. A partially programmed device is possible - verify if in doubt.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reference (red bytes).</strong> After a read or verify the data read from the device is kept as a reference for the
+affected range. Bytes in the editor that differ from the reference are drawn in <strong>red</strong>. Use <em>View &gt; Clear device
+reference</em> to remove it. Loading a file or changing the device also clears it.</p>
+<p><strong>Options</strong></p>
+<ul>
+<li><strong>Blank check before writing</strong> - aborts the write if the device is not blank.</li>
+<li><strong>Verify section after writing</strong> - reads the device back after the write and compares the section.</li>
+</ul>
+<p><strong>Programming time.</strong> Writing is slow by nature, reading is not.</p>
+<ul>
+<li>EPROMs such as the 2708 are programmed in many passes (default 100). In every pass each address receives a
+  short programming pulse; the usual 2708 method uses 1 ms pulses. That adds up to roughly 100 ms per byte, which
+  is in the order of <strong>two minutes for a 1 KB 2708</strong> before any communication overhead is counted.</li>
+<li>The PC sends the image in blocks of 8 bytes and waits for an acknowledgement after every block, so one pass
+  of a 1 KB device needs 128 round trips and every pass sends the complete device image. Writing a <em>shorter section</em>
+  therefore does <strong>not</strong> make the write faster.</li>
+<li><strong>Time display.</strong> Above the log, under the progress bar, a line shows the current phase (<em>Blank check</em>,
+  <em>Writing</em>, <em>Verifying</em>, <em>Read</em> ...), the percentage, the <strong>elapsed time</strong> and the <strong>estimated remaining time</strong>,
+  for example <code>Writing: 35 %   elapsed 0:42   remaining ~1:18   (total 0:50)</code>. The estimate appears after a
+  couple of seconds and is extrapolated from the progress so far, so it becomes more accurate as the write goes on.
+  Each phase (blank check, write, verify) is timed separately and the total of the whole operation is shown
+  in brackets. When an operation ends, the line shows the final result, e.g. <code>Write section finished after 2:05</code>.</li>
+<li>The log prints the real duration after each write (<code>Write finished (x s)</code>) and the total time of every
+  operation that took longer than two seconds.</li>
+<li>To keep the time as short as possible: use the highest baud rate that your programmer's firmware supports
+  (the communication part shrinks, the pulse time does not); leave <strong>Passes</strong> at the default - a smaller number
+  shortens the write in proportion but can leave cells weakly programmed, so verify carefully if you try it.</li>
+<li>A read, blank check or verify of a 1 KB device takes only a few seconds, so leaving blank check and verify
+  switched on costs little compared with the write itself.</li>
+<li>Devices in <em>hit until set</em> mode (8741/8742/8748/8749/8041/8042/8048/8049/8050/8755/MCM6876x) program each byte
+  until it reads back correctly; their time depends on the device and is reported in the log.</li>
+</ul>
+<hr />
+<h2 id="9-hex-editor">9. Hex editor</h2>
+<p>The editor shows the offset column, the hex bytes and the ASCII characters. The number of <strong>bytes per row adapts to
+the window width in steps of 16</strong> (16, 32, 48, 64 ... up to 256). When you resize the window the same byte
+stays at the top. Large buffers get 6- or 8-digit offsets.</p>
+<p><strong>Mouse:</strong> click to place the cursor, drag to select, Shift+click to extend, wheel to scroll. A click in the hex
+pane or the ASCII pane selects the pane you type in.</p>
+<p><strong>Keyboard</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code>-<code>9</code>, <code>A</code>-<code>F</code></td>
+<td>Edit the byte at the cursor, one hex digit at a time (hex pane)</td>
+</tr>
+<tr>
+<td>any printable character</td>
+<td>Replace the byte (ASCII pane)</td>
+</tr>
+<tr>
+<td>Insert</td>
+<td>Switch between hex pane and ASCII pane</td>
+</tr>
+<tr>
+<td>Arrow keys</td>
+<td>Move; Up/Down move by one row</td>
+</tr>
+<tr>
+<td>Page Up / Page Down</td>
+<td>Move by one screen</td>
+</tr>
+<tr>
+<td>Home / End</td>
+<td>Start / end of the row; with Ctrl: start / end of the buffer</td>
+</tr>
+<tr>
+<td>Shift + movement</td>
+<td>Extend the selection</td>
+</tr>
+<tr>
+<td>Ctrl+A</td>
+<td>Select all</td>
+</tr>
+<tr>
+<td>Ctrl+C / Ctrl+V</td>
+<td>Copy / paste (hex text <code>DE AD BE EF</code> in the hex pane, characters in the ASCII pane)</td>
+</tr>
+<tr>
+<td>Delete</td>
+<td>Fill the selection with FF</td>
+</tr>
+<tr>
+<td>Ctrl+Z / Ctrl+Y</td>
+<td>Undo / redo (the history is cleared when a new image is loaded or the buffer is resized)</td>
+</tr>
+<tr>
+<td>Ctrl+F</td>
+<td>Find hex bytes; Ctrl+Shift+F find text; F3 find next (wraps around)</td>
+</tr>
+<tr>
+<td>Ctrl+G</td>
+<td>Go to address (hex)</td>
+</tr>
+<tr>
+<td>Ctrl+B</td>
+<td>Use the selection as burn section</td>
+</tr>
+</tbody>
+</table>
+<p>The size of the buffer cannot change by typing; use <em>Resize buffer</em> instead.</p>
+<hr />
+<h2 id="10-checksums">10. Checksums</h2>
+<p>The <strong>Checksums</strong> box (bottom right) recalculates live. Choose the range:</p>
+<ul>
+<li><strong>Whole buffer</strong></li>
+<li><strong>Selection</strong></li>
+<li><strong>Burn section</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sum-8 (mod 256)</td>
+<td>Sum of all bytes modulo 256</td>
+</tr>
+<tr>
+<td>Sum-8 two's complement</td>
+<td>The byte that makes the 8-bit sum zero (a checksum byte to store in the image)</td>
+</tr>
+<tr>
+<td>Sum-16</td>
+<td>Sum of all bytes modulo 65536</td>
+</tr>
+<tr>
+<td>XOR-8</td>
+<td>XOR of all bytes</td>
+</tr>
+<tr>
+<td>CRC-8</td>
+<td>Polynomial 0x07, init 0, no reflection</td>
+</tr>
+<tr>
+<td>CRC-16/CCITT-FALSE</td>
+<td>Polynomial 0x1021, init 0xFFFF</td>
+</tr>
+<tr>
+<td>CRC-16/XMODEM</td>
+<td>Polynomial 0x1021, init 0</td>
+</tr>
+<tr>
+<td>CRC-16/ARC (IBM)</td>
+<td>Polynomial 0x8005 reflected (0xA001), init 0</td>
+</tr>
+<tr>
+<td>CRC-32 (IEEE 802.3)</td>
+<td>The usual CRC-32 of ZIP/Ethernet</td>
+</tr>
+</tbody>
+</table>
+<p>Check values for the ASCII text <code>123456789</code>: CRC-8 <code>F4</code>, CCITT-FALSE <code>29B1</code>, XMODEM <code>31C3</code>, ARC <code>BB3D</code>, CRC-32
+<code>CBF43926</code>. Double-click a row to copy its value to the clipboard.</p>
+<hr />
+<h2 id="11-typical-workflows">11. Typical workflows</h2>
+<p><strong>A. Burn a file into a 2708</strong></p>
+<ol>
+<li>Connect, choose <em>2708</em>.</li>
+<li>File &gt; Open the <code>.bin</code> or <code>.hex</code> file.</li>
+<li>Keep the section defaults (offset 0, length 400 hex = 1 KB).</li>
+<li>Insert a blank (UV-erased) device, click <strong>Write section</strong> and confirm. Blank check and verify are on by default.</li>
+</ol>
+<p><strong>B. Split a large ROM image over several EPROMs</strong></p>
+<ol>
+<li>Load the large file (for example 4 KB) and choose the device size (for example 2708 = 1 KB).</li>
+<li>The section shows bank 1/4. Burn it, then press <strong>Bank ▶</strong>, insert the next device and burn again.
+   Each EPROM contains the bytes of its bank starting at address 0.</li>
+</ol>
+<p><strong>C. Burn several pieces of a file into one device</strong></p>
+<ol>
+<li>Select the first piece in the editor and press <strong>From selection</strong> (Ctrl+B); set the device offset.</li>
+<li>Turn off <strong>Blank check before writing</strong> for every piece after the first and write.</li>
+</ol>
+<p><strong>D. Build one image from several EPROMs</strong></p>
+<ol>
+<li>Tick <em>Read: insert into buffer at source offset</em>.</li>
+<li>Set Source offset to where the first device goes (e.g. 0), insert the device, <strong>Read</strong>.</li>
+<li>Set the next source offset (e.g. 400), insert the next device, <strong>Read</strong>. Save as BIN or Intel HEX.</li>
+</ol>
+<p><strong>E. Compare a device with a file</strong></p>
+<p>Load the file, set the section, click <strong>Verify section</strong>. Differences are red in the editor.</p>
+<hr />
+<h2 id="12-troubleshooting">12. Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause / remedy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Port list is empty</td>
+<td>Cable/driver missing. Check the Device Manager; press ↻.</td>
+</tr>
+<tr>
+<td>Only <code>COMx</code> without a description</td>
+<td>The description is read from Windows (WMI); on restricted systems it is not available. The port still works.</td>
+</tr>
+<tr>
+<td>"Timeout - no response from the programmer"</td>
+<td>Wrong baud rate, wrong port, or the programmer has no power. Boards that reset when the port is opened need two seconds; reconnect once.</td>
+</tr>
+<tr>
+<td>"Invalid response ..."</td>
+<td>Wrong baud rate or the port belongs to another device.</td>
+</tr>
+<tr>
+<td>"Supply voltage outside the allowed range"</td>
+<td>Check the 12 V supply of the programmer; allowed range see <a href="#5-supported-devices">section 5</a>.</td>
+</tr>
+<tr>
+<td>"Programmer reports: no hardware (shield) detected" / "wrong hardware"</td>
+<td>The shield for the chosen device type is missing or wrong, or the switch position is wrong.</td>
+</tr>
+<tr>
+<td>"Device is not blank"</td>
+<td>The device contains data. Erase it (UV) or turn off the blank check to program over it.</td>
+</tr>
+<tr>
+<td>Verify fails after writing</td>
+<td>Poor contact, aged device, too few passes (raise <strong>Passes</strong>), wrong voltage. The first differing byte is selected.</td>
+</tr>
+<tr>
+<td>Writing takes minutes</td>
+<td>Normal for EPROMs that are programmed in 100 passes, see <em>Programming time</em> in <a href="#8-programmer-operations">section 8</a>. A higher baud rate helps only with the communication part.</td>
+</tr>
+<tr>
+<td>A device was written with the wrong section</td>
+<td>Programming cannot set bits back to 1; the device must be UV-erased (EPROM types).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="13-safety-notes">13. Safety notes</h2>
+<ul>
+<li>The programmer generates high programming voltages. Insert and remove devices only when the programmer is idle
+  and, if the hardware requires it, with the supply switched off.</li>
+<li>Check orientation of the device in the socket and the shield/switch settings before you write.</li>
+<li>Cancelling during a write can leave a device partially programmed.</li>
+<li>Only the 2708 has been tested on real hardware so far; for all other device types verify the results.</li>
+</ul>
+<hr />
+<h2 id="14-protocol-summary-for-developers">14. Protocol summary (for developers)</h2>
+<p>Serial link 8N1, no handshake, read timeout 3 s. Every command is <code>cmd, ~cmd, arguments</code>. The programmer answers
+with <code>cmd, error</code>. Errors: <code>00</code> ok, <code>01</code> proceed (dual socket), <code>02</code> complete, <code>09</code> not blank, others are
+failures (<code>03</code> bad command, <code>04</code> not supported, <code>05</code> no shield, <code>06</code> wrong shield, <code>07</code> wrong switch position,
+<code>0A</code> retries exceeded).</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Code</th>
+<th>Arguments</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start write</td>
+<td><code>10</code></td>
+<td>device, hit-until-set flag, retries</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Write chunk</td>
+<td><code>11</code></td>
+<td>8 data bytes (after the header)</td>
+<td>final answer <code>02</code>, then 5 result bytes</td>
+</tr>
+<tr>
+<td>Start read</td>
+<td><code>12</code></td>
+<td>device</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Read chunk</td>
+<td><code>13</code></td>
+<td>-</td>
+<td>8 bytes after the answer, final answer <code>02</code></td>
+</tr>
+<tr>
+<td>Start blank check</td>
+<td><code>14</code></td>
+<td>device</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Blank check</td>
+<td><code>15</code></td>
+<td>-</td>
+<td><code>02</code> = blank, otherwise 3 bytes (offset hi, lo, value)</td>
+</tr>
+<tr>
+<td>Reset</td>
+<td><code>16</code></td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Measure 12 V</td>
+<td><code>17</code></td>
+<td>-</td>
+<td>2 bytes, big endian, hundredths of a volt</td>
+</tr>
+</tbody>
+</table>
+<p>Device codes: 1702A <code>00</code>, 2704 <code>01</code>, 2708 <code>02</code>, MCM6876x <code>03</code>, 8748 <code>04</code>, 8749 <code>05</code>, 8741 <code>06</code>, 8742 <code>07</code>,
+8048 <code>08</code>, 8049 <code>09</code>, 8050 <code>0A</code>, 8755 <code>0B</code>, 8041 <code>0C</code>, 8042 <code>0D</code>, TMS2716 <code>0E</code>.</p>
+<hr />
+<h2 id="15-building-versioning-license-changelog">15. Building, versioning, license, changelog</h2>
+<p><strong>Source files</strong></p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Program.cs</code></td>
+<td>Entry point</td>
+</tr>
+<tr>
+<td><code>MainForm.cs</code></td>
+<td>Main window and all operations</td>
+</tr>
+<tr>
+<td><code>HexEditor.cs</code></td>
+<td>Hex editor control</td>
+</tr>
+<tr>
+<td><code>Programmer.cs</code></td>
+<td>Serial protocol and device table</td>
+</tr>
+<tr>
+<td><code>PortInfo.cs</code></td>
+<td>COM ports with Device Manager names</td>
+</tr>
+<tr>
+<td><code>Checksums.cs</code>, <code>IntelHex.cs</code></td>
+<td>Checksums and Intel HEX</td>
+</tr>
+<tr>
+<td><code>AppInfo.cs</code></td>
+<td>Program name and version</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Version number.</strong> The version is set in one place: <code>&lt;Version&gt;</code> in <code>HvEpromGui.csproj</code>. It appears in the title
+bar and in <em>Help &gt; About</em>. Increase it there for every release.</p>
+<p><strong>License.</strong> The protocol implementation is derived from hvepromcmd by Matthew Millman (GPL v2 or later);
+this program is therefore also distributed under <strong>GPL-2.0-or-later</strong>.</p>
+<p><strong>Changelog</strong></p>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>First numbered release: all hvepromcmd device types, hex editor with adaptive row length, undo/redo, search, checksums (sums and CRCs), BIN and Intel HEX files up to 16 MB, section burning with bank navigation, read into buffer, COM port names from the Device Manager, English and German documentation. Tested with 2708 EPROMs (read, write, verify). Progress display with elapsed time, estimated remaining time and total time per operation and phase. Documentation opens as HTML pages in the web browser.</td>
+</tr>
+</tbody>
+</table>
+</main>
+</body>
+</html>

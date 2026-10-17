@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HV-EPROM Programmer GUI - Handbuch</title>
+<style>
+:root{--bg:#fff;--fg:#1f2328;--muted:#59636e;--line:#d1d9e0;--soft:#f6f8fa;--link:#0969da;--quote:#fff8c5}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--muted:#9198a1;--line:#3d444d;--soft:#161b22;--link:#4493f8;--quote:#2d2a12}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:32px 20px 64px}
+h1,h2,h3{line-height:1.25}
+h1{font-size:2em;border-bottom:1px solid var(--line);padding-bottom:.3em}
+h2{font-size:1.5em;border-bottom:1px solid var(--line);padding-bottom:.3em;margin-top:2em}
+h3{font-size:1.2em;margin-top:1.6em}
+a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
+code{background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:.1em .35em;font:.9em Consolas,"Courier New",monospace}
+pre{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre code{background:none;border:0;padding:0}
+blockquote{margin:1em 0;padding:.6em 1em;background:var(--quote);border-left:4px solid #d4a72c;border-radius:4px}
+blockquote p{margin:.3em 0}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;margin:1em 0}
+th,td{border:1px solid var(--line);padding:6px 12px;text-align:left;vertical-align:top}
+th{background:var(--soft)}
+hr{border:0;border-top:1px solid var(--line);margin:2em 0}
+li{margin:.2em 0}
+@media print{body{font-size:11pt}main{max-width:none;padding:0}a{color:inherit}}
+</style>
+</head>
+<body>
+<main>
+<h1 id="hv-eprom-programmer-gui---handbuch">HV-EPROM Programmer GUI - Handbuch</h1>
+<p><strong>Version 1.0.0</strong> - English version: <a href="MANUAL.en.html">MANUAL.en.md</a></p>
+<p>Eine Windows-Oberfläche für den HVEPROM-EPROM-Programmer von Matthew Millman. Sie ersetzt das Kommandozeilen-Tool
+<a href="https://github.com/inaxeon/hvepromcmd">hvepromcmd</a> durch ein grafisches Programm mit Hex-Editor, Prüfsummen
+und der Möglichkeit, Abschnitte aus großen Dateien in ein EPROM zu brennen.</p>
+<blockquote>
+<p><strong>Stand:</strong> Das serielle Protokoll wurde aus dem Quellcode von hvepromcmd übernommen. Das Programm wurde mit
+<strong>2708-EPROMs getestet: Lesen, Schreiben und Vergleichen funktionieren</strong>. Die übrigen Bausteintypen folgen
+ebenfalls der Logik von hvepromcmd, wurden aber noch nicht an echter Hardware getestet. Probiere sie zuerst mit
+einem Baustein, den du entbehren kannst.</p>
+</blockquote>
+<hr />
+<h2 id="1-inhalt">1. Inhalt</h2>
+<ol>
+<li><a href="#2-voraussetzungen-und-installation">Voraussetzungen und Installation</a></li>
+<li><a href="#3-programmer-verbinden">Programmer verbinden</a></li>
+<li><a href="#4-hauptfenster">Hauptfenster</a></li>
+<li><a href="#5-unterstützte-bausteine">Unterstützte Bausteine</a></li>
+<li><a href="#6-dateien-und-puffer">Dateien und Puffer</a></li>
+<li><a href="#7-brenn-abschnitte">Brenn-Abschnitte</a></li>
+<li><a href="#8-programmer-funktionen">Programmer-Funktionen</a></li>
+<li><a href="#9-hex-editor">Hex-Editor</a></li>
+<li><a href="#10-prüfsummen">Prüfsummen</a></li>
+<li><a href="#11-typische-abläufe">Typische Abläufe</a></li>
+<li><a href="#12-fehlersuche">Fehlersuche</a></li>
+<li><a href="#13-sicherheitshinweise">Sicherheitshinweise</a></li>
+<li><a href="#14-protokoll-in-kürze-für-entwickler">Protokoll in Kürze (für Entwickler)</a></li>
+<li><a href="#15-bauen-version-lizenz-änderungen">Bauen, Version, Lizenz, Änderungen</a></li>
+</ol>
+<p>Die Oberfläche des Programms ist englisch. Die englischen Bezeichnungen stehen deshalb in diesem Handbuch
+<strong>fett</strong> oder in <code>Schreibmaschinenschrift</code>.</p>
+<hr />
+<h2 id="2-voraussetzungen-und-installation">2. Voraussetzungen und Installation</h2>
+<table>
+<thead>
+<tr>
+<th>Punkt</th>
+<th>Anforderung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Betriebssystem</td>
+<td>Windows 10 oder 11</td>
+</tr>
+<tr>
+<td>Laufzeit</td>
+<td>.NET 8 Desktop Runtime (zum Bauen: .NET 8 SDK)</td>
+</tr>
+<tr>
+<td>Hardware</td>
+<td>HVEPROM-Programmer mit serieller (USB-)Verbindung und passendem Sockel-Shield</td>
+</tr>
+<tr>
+<td>Versorgung</td>
+<td>12-V-Netzteil für den Programmer (er misst seine Versorgungsspannung selbst)</td>
+</tr>
+</tbody>
+</table>
+<p>Bauen und starten:</p>
+<pre><code>dotnet build -c Release
+dotnet publish -c Release -r win-x64 --self-contained false
+</code></pre>
+<p>Die Dokumentation aus dem Ordner <code>docs</code> wird neben die ausführbare Datei kopiert und lässt sich über das Menü
+<strong>Help</strong> öffnen (F1 = englisches Handbuch, <strong>Dokumentation (Deutsch)</strong> = dieses Handbuch). Sie öffnet sich als
+HTML-Seite im Webbrowser. Derselbe Text liegt auch als Markdown-Dateien (<code>.md</code>) bei; die HTML-Seiten werden daraus
+erzeugt.</p>
+<hr />
+<h2 id="3-programmer-verbinden">3. Programmer verbinden</h2>
+<ol>
+<li>Programmer an den PC anschließen und die 12-V-Versorgung einschalten.</li>
+<li>In der oberen Leiste den <strong>Port</strong> wählen. Die Liste zeigt den Namen, den auch der Windows-Geräte-Manager
+   verwendet, zum Beispiel <code>COM3 - Arduino Mega 2560</code> oder <code>COM5 - USB Serial Port</code>. Die Namen werden im Hintergrund
+   abgefragt: Zuerst erscheinen die reinen <code>COMx</code>-Namen, kurz danach die Beschreibungen. Die Schaltfläche <strong>↻</strong>
+   liest die Ports neu ein, zum Beispiel nach dem Anstecken des Kabels.</li>
+<li>Die <strong>Baud</strong>-Rate wählen (9600, 38400 oder 115200). Voreinstellung ist <strong>38400</strong> wie beim Kommandozeilen-Tool;
+   sie muss zur Firmware des Programmers passen.</li>
+<li>Den <strong>Device</strong> (Baustein) wählen, siehe <a href="#5-unterstützte-bausteine">Abschnitt 5</a>.</li>
+<li><strong>Connect</strong> klicken. Das Programm öffnet den Port (8 Datenbits, keine Parität, 1 Stoppbit, kein Handshake)
+   und misst die Versorgungsspannung; das Ergebnis steht im Log. Antwortet das Board nicht sofort (Boards wie der
+   Arduino starten beim Öffnen des Ports neu), wartet das Programm zwei Sekunden und versucht es noch einmal.</li>
+<li><strong>Disconnect</strong> schließt den Port wieder. Port, Baudrate und die Verbinden-Schaltfläche sind gesperrt, solange
+   eine Funktion läuft.</li>
+</ol>
+<hr />
+<h2 id="4-hauptfenster">4. Hauptfenster</h2>
+<table>
+<thead>
+<tr>
+<th>Bereich</th>
+<th>Zweck</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Menüleiste</td>
+<td>Befehle für File, Edit, View und Help</td>
+</tr>
+<tr>
+<td>Obere Leiste</td>
+<td>Port, Baudrate, Baustein, Connect</td>
+</tr>
+<tr>
+<td>Mitte</td>
+<td>Hex-Editor mit dem Puffer</td>
+</tr>
+<tr>
+<td>Rechts</td>
+<td><strong>Burn section</strong> (Brenn-Abschnitt) und <strong>Programmer</strong></td>
+</tr>
+<tr>
+<td>Unten links</td>
+<td>Fortschrittsbalken und Log</td>
+</tr>
+<tr>
+<td>Unten rechts</td>
+<td><strong>Checksums</strong> (Prüfsummen)</td>
+</tr>
+<tr>
+<td>Statusleiste</td>
+<td>Puffergröße, Cursor-Offset und -Wert, Auswahl</td>
+</tr>
+</tbody>
+</table>
+<p>Die Titelleiste zeigt die Programmversion, den Dateinamen und ein <code>*</code>, wenn der Puffer ungespeicherte
+Änderungen enthält.</p>
+<hr />
+<h2 id="5-unterstützte-bausteine">5. Unterstützte Bausteine</h2>
+<p>Die Liste entspricht hvepromcmd. „Füllwert“ ist der Wert einer unprogrammierten Zelle. Das Programm verwendet ihn
+für alle Teile des Baustein-Abbilds, die deine Daten nicht abdecken.</p>
+<table>
+<thead>
+<tr>
+<th>Baustein</th>
+<th>Größe</th>
+<th>Schreibmodus</th>
+<th>Standard</th>
+<th>Füllwert</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1702A</td>
+<td>256 B</td>
+<td>feste Durchläufe</td>
+<td>32 Durchläufe</td>
+<td>00</td>
+</tr>
+<tr>
+<td>2704</td>
+<td>512 B</td>
+<td>feste Durchläufe</td>
+<td>100 Durchläufe</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>2708</td>
+<td>1 KB</td>
+<td>feste Durchläufe</td>
+<td>100 Durchläufe</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>TMS2716</td>
+<td>2 KB</td>
+<td>feste Durchläufe</td>
+<td>100 Durchläufe</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>MCM6876x</td>
+<td>8 KB</td>
+<td>bis gesetzt</td>
+<td>5 Nachschreib-Zyklen</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8741</td>
+<td>1 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>00</td>
+</tr>
+<tr>
+<td>8742</td>
+<td>2 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>00</td>
+</tr>
+<tr>
+<td>8748</td>
+<td>1 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>00</td>
+</tr>
+<tr>
+<td>8749</td>
+<td>2 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>00</td>
+</tr>
+<tr>
+<td>8041</td>
+<td>1 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8042</td>
+<td>2 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8048</td>
+<td>1 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8049</td>
+<td>2 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8050</td>
+<td>4 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+<tr>
+<td>8755</td>
+<td>2 KB</td>
+<td>bis gesetzt</td>
+<td>-</td>
+<td>FF</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Schreibmodi</strong></p>
+<ul>
+<li><strong>Feste Durchläufe</strong> - Das ganze Abbild wird pro Durchlauf einmal gesendet. Die Anzahl stellst du bei
+  <strong>Passes</strong> ein.</li>
+<li><strong>Bis gesetzt (hit until set)</strong> - Ein Durchlauf, in dem der Programmer jedes Byte selbst so lange wiederholt,
+  bis es richtig zurückgelesen wird. Nach dem Schreiben zeigt das Log, wie oft das am häufigsten wiederholte Byte
+  geschrieben wurde und wie viele Schreibvorgänge es insgesamt waren. Die Checkbox
+  <strong>Fixed passes instead of "hit until set" (-m)</strong> schaltet diese Bausteine auf feste Durchläufe um (entspricht
+  <code>-m</code> im Kommandozeilen-Tool); dann gilt <strong>Passes</strong>. <strong>Retry cycles</strong> (Nachschreib-Zyklen) gibt es nur beim
+  MCM6876x.</li>
+</ul>
+<p>Beim Wechsel des Bausteins werden Durchläufe, Nachschreib-Zyklen und Abschnitt auf die Standardwerte des neuen
+Bausteins gesetzt. Der Puffer bleibt erhalten.</p>
+<p><strong>Spannungsprüfung.</strong> Vor jeder Funktion misst der Programmer seine 12-V-Versorgung. Beim 2704 und 2708 muss sie
+zwischen 11,5 V und 13,0 V liegen, bei allen anderen Bausteinen zwischen 10 V und 14 V. Sonst wird die
+Funktion verweigert.</p>
+<hr />
+<h2 id="6-dateien-und-puffer">6. Dateien und Puffer</h2>
+<p>Der <strong>Puffer</strong> ist das Abbild, das im Hex-Editor steht. Er kann beliebig groß sein (1 Byte bis 16 MB) und ist
+nicht an die Größe des Bausteins gebunden.</p>
+<table>
+<thead>
+<tr>
+<th>Befehl</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>File &gt; Open (Strg+O)</td>
+<td>Lädt <code>.bin</code>/<code>.rom</code> als Rohdaten oder <code>.hex</code>/<code>.ihx</code> als Intel-HEX. Intel-HEX wird an die echten Adressen von 0 bis zur höchsten belegten Adresse gelegt, Lücken werden mit FF gefüllt.</td>
+</tr>
+<tr>
+<td>File &gt; New buffer (Strg+N)</td>
+<td>Leerer Puffer in Bausteingröße (FF bzw. 00, je nach Baustein).</td>
+</tr>
+<tr>
+<td>File &gt; Resize buffer</td>
+<td>Vergrößert den Puffer (mit FF aufgefüllt) oder verkleinert ihn (Daten am Ende gehen nach Rückfrage verloren). Die Größe wird hexadezimal eingegeben.</td>
+</tr>
+<tr>
+<td>File &gt; Save as BIN (Strg+S)</td>
+<td>Speichert den ganzen Puffer als Rohdaten.</td>
+</tr>
+<tr>
+<td>File &gt; Save as Intel HEX</td>
+<td>Speichert den ganzen Puffer; die Adressen entsprechen den Puffer-Offsets (oberhalb 64 KB mit Extended-Linear-Address-Records).</td>
+</tr>
+<tr>
+<td>File &gt; Save section as BIN</td>
+<td>Speichert nur den aktuellen Brenn-Abschnitt.</td>
+</tr>
+</tbody>
+</table>
+<p>Ist der Puffer größer als der Baustein, weist das Log darauf hin, dass du einen Abschnitt oder eine Bank wählen
+sollst.</p>
+<hr />
+<h2 id="7-brenn-abschnitte">7. Brenn-Abschnitte</h2>
+<p>Ein <strong>Abschnitt</strong> legt fest, welcher Teil des Puffers in welchen Teil des Bausteins geschrieben wird. Damit brennst
+du große Dateien in kleine EPROMs.</p>
+<table>
+<thead>
+<tr>
+<th>Feld</th>
+<th>Bedeutung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Source offset (hex)</strong></td>
+<td>Erstes Byte des Abschnitts im Puffer</td>
+</tr>
+<tr>
+<td><strong>Length (hex)</strong></td>
+<td>Anzahl der Bytes</td>
+</tr>
+<tr>
+<td><strong>Device offset (hex)</strong></td>
+<td>Adresse im Baustein, an die das erste Byte kommt (normalerweise 0)</td>
+</tr>
+</tbody>
+</table>
+<p>Der Abschnitt ist im Hex-Editor gelb markiert und unter den Schaltflächen zusammengefasst, einschließlich der
+Bank-Nummer (<code>bank 2/4</code> = der zweite bausteingroße Block des Puffers). Ungültige Eingaben (kein Hex, Abschnitt
+hinter dem Ende des Puffers oder des Bausteins) werden an derselben Stelle gemeldet.</p>
+<p>Schaltflächen:</p>
+<ul>
+<li><strong>From selection</strong> (Strg+B) - übernimmt die markierten Bytes als Quelle. Ist die Auswahl größer als der
+  Baustein, wird sie gekürzt.</li>
+<li><strong>◀ Bank / Bank ▶</strong> - verschiebt den Quell-Offset um eine Bausteingröße und setzt die Länge auf einen ganzen
+  Baustein (oder den Rest des Puffers). Der Baustein-Offset wird auf 0 gesetzt.</li>
+</ul>
+<p>Standardmäßig (nach dem Laden einer Datei oder dem Wechsel des Bausteins) ist der Abschnitt der erste
+bausteingroße Block des Puffers.</p>
+<p><strong>Wie ein Abschnitt geschrieben wird.</strong> Das Programm baut ein vollständiges Baustein-Abbild: Der Bereich außerhalb
+des Abschnitts wird mit dem „unprogrammierten“ Wert des Bausteins gefüllt (FF, bei 8741/8742/8748/8749/1702A
+00), dein Abschnitt wird am Baustein-Offset eingesetzt. Da Programmieren Zellen nur vom gelöschten in den
+programmierten Zustand bringen kann, bleibt der Bereich außerhalb des Abschnitts bei einem leeren Baustein
+unverändert. So kannst du <strong>mehrere Abschnitte nacheinander in denselben Baustein brennen</strong> - schalte dafür
+<strong>Blank check before writing</strong> beim zweiten und jedem weiteren Abschnitt aus.</p>
+<p><strong>Verify</strong> vergleicht nur den Abschnitt (Bausteinbytes ab Baustein-Offset gegen Pufferbytes ab Quell-Offset).</p>
+<p><strong>Read: insert into buffer at source offset.</strong> Ist dieses Häkchen gesetzt, ersetzt <strong>Read</strong> den Puffer nicht.
+Stattdessen wird der Bausteinbereich (Baustein-Offset, Länge) am Quell-Offset in den Puffer kopiert; der Puffer
+wächst bei Bedarf (mit FF aufgefüllt). So setzt du aus mehreren EPROMs ein großes Abbild zusammen.</p>
+<hr />
+<h2 id="8-programmer-funktionen">8. Programmer-Funktionen</h2>
+<p>Alle Funktionen brauchen eine Verbindung. Während eine läuft, ist <strong>Cancel</strong> aktiv, ein Fortschrittsbalken wird
+angezeigt und der Editor bleibt bedienbar. Das Log zeigt jeden Schritt mit Uhrzeit. Nach jeder Funktion (auch nach
+Fehlern und Abbruch) sendet das Programm ein Reset an den Programmer.</p>
+<table>
+<thead>
+<tr>
+<th>Schaltfläche</th>
+<th>Funktion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Measure 12 V</strong></td>
+<td>Liest und prüft die Versorgungsspannung.</td>
+</tr>
+<tr>
+<td><strong>Blank check</strong></td>
+<td>Prüft, ob der ganze Baustein leer ist; wenn nicht, zeigt das Log den ersten nicht leeren Offset und dessen Wert.</td>
+</tr>
+<tr>
+<td><strong>Read</strong></td>
+<td>Liest den ganzen Baustein. Standardmäßig ersetzt der Bausteininhalt den Puffer, der Dateiname wird gelöscht und der Inhalt wird zur <em>Referenz</em> (siehe unten). Die CRC-32 der Daten steht im Log. Mit <em>insert into buffer</em> wird nur ein Bereich eingefügt.</td>
+</tr>
+<tr>
+<td><strong>Verify section</strong></td>
+<td>Liest den Baustein und vergleicht den Abschnitt. Die erste Abweichung wird im Editor markiert und im Log genannt; zusätzlich steht dort die Zahl der abweichenden Bytes.</td>
+</tr>
+<tr>
+<td><strong>Write section</strong></td>
+<td>Fragt nach Bestätigung, prüft die Versorgung, führt optional den Blank-Check aus, schreibt den Abschnitt und verifiziert ihn optional.</td>
+</tr>
+<tr>
+<td><strong>Cancel</strong></td>
+<td>Bricht nach dem aktuellen Block ab. Ein teilweise programmierter Baustein ist möglich - im Zweifel verifizieren.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Referenz (rote Bytes).</strong> Nach Read oder Verify bleiben die gelesenen Bausteindaten für den betroffenen Bereich
+als Referenz erhalten. Bytes im Editor, die von der Referenz abweichen, werden <strong>rot</strong> gezeichnet. Mit
+<em>View &gt; Clear device reference</em> entfernst du sie. Auch Laden einer Datei oder Wechsel des Bausteins löscht
+die Referenz.</p>
+<p><strong>Optionen</strong></p>
+<ul>
+<li><strong>Blank check before writing</strong> - bricht das Schreiben ab, wenn der Baustein nicht leer ist.</li>
+<li><strong>Verify section after writing</strong> - liest nach dem Schreiben zurück und vergleicht den Abschnitt.</li>
+</ul>
+<p><strong>Programmierdauer.</strong> Das Schreiben ist von Natur aus langsam, das Lesen nicht.</p>
+<ul>
+<li>EPROMs wie das 2708 werden in vielen Durchläufen programmiert (Standard 100). In jedem Durchlauf bekommt jede
+  Adresse einen kurzen Programmierimpuls; beim 2708 sind 1-ms-Impulse das übliche Verfahren. Das summiert sich auf
+  etwa 100 ms pro Byte, also in der Größenordnung von <strong>zwei Minuten für ein 2708 mit 1 KB</strong>, noch ohne den
+  Aufwand für die Übertragung.</li>
+<li>Der PC sendet das Abbild in Blöcken zu 8 Bytes und wartet nach jedem Block auf die Bestätigung. Ein Durchlauf
+  eines 1-KB-Bausteins braucht also 128 Hin-und-Rück-Übertragungen, und jeder Durchlauf sendet das vollständige
+  Baustein-Abbild. Einen <em>kürzeren Abschnitt</em> zu schreiben macht das Schreiben daher <strong>nicht</strong> schneller.</li>
+<li><strong>Zeitanzeige.</strong> Über dem Log, unter dem Fortschrittsbalken, zeigt eine Zeile die aktuelle Phase (<em>Blank check</em>,
+  <em>Writing</em>, <em>Verifying</em>, <em>Read</em> ...), den Prozentwert, die <strong>verstrichene Zeit</strong> und die <strong>geschätzte Restzeit</strong>,
+  zum Beispiel <code>Writing: 35 %   elapsed 0:42   remaining ~1:18   (total 0:50)</code>. Die Schätzung erscheint nach
+  wenigen Sekunden und wird aus dem bisherigen Fortschritt hochgerechnet; sie wird mit dem Fortschreiben des
+  Schreibens genauer. Jede Phase (Blank-Check, Schreiben, Verify) wird einzeln gemessen, die Gesamtzeit der ganzen
+  Funktion steht in Klammern. Am Ende der Funktion zeigt die Zeile das Ergebnis, z. B.
+  <code>Write section finished after 2:05</code>.</li>
+<li>Das Log zeigt nach jedem Schreiben die tatsächliche Dauer (<code>Write finished (x s)</code>) sowie die Gesamtzeit jeder
+  Funktion, die länger als zwei Sekunden gedauert hat.</li>
+<li>So bleibt die Dauer möglichst kurz: Die höchste Baudrate verwenden, die die Firmware deines Programmers
+  unterstützt (der Übertragungsanteil sinkt, die Impulszeit nicht). <strong>Passes</strong> auf dem Standardwert lassen - eine
+  kleinere Zahl verkürzt das Schreiben im gleichen Verhältnis, kann aber schwach programmierte Zellen
+  hinterlassen; wer es ausprobiert, sollte gründlich verifizieren.</li>
+<li>Lesen, Blank-Check oder Verify eines 1-KB-Bausteins dauert nur wenige Sekunden. Blank-Check und Verify
+  eingeschaltet zu lassen kostet deshalb im Vergleich zum Schreiben kaum Zeit.</li>
+<li>Bausteine im Modus <em>bis gesetzt</em> (8741/8742/8748/8749/8041/8042/8048/8049/8050/8755/MCM6876x) programmieren jedes
+  Byte, bis es richtig zurückgelesen wird. Ihre Dauer hängt vom Baustein ab und steht im Log.</li>
+</ul>
+<hr />
+<h2 id="9-hex-editor">9. Hex-Editor</h2>
+<p>Der Editor zeigt Offset-Spalte, Hex-Bytes und ASCII-Zeichen. Die <strong>Anzahl der Bytes pro Zeile passt sich der
+Fensterbreite in 16-Byte-Schritten an</strong> (16, 32, 48, 64 ... bis 256). Beim Ändern der Fenstergröße bleibt dasselbe
+Byte oben sichtbar. Große Puffer bekommen 6- oder 8-stellige Offsets.</p>
+<p><strong>Maus:</strong> Klick setzt den Cursor, Ziehen markiert, Shift+Klick erweitert, Mausrad scrollt. Ein Klick in den Hex-
+oder ASCII-Bereich legt fest, in welchem Bereich du tippst.</p>
+<p><strong>Tastatur</strong></p>
+<table>
+<thead>
+<tr>
+<th>Taste</th>
+<th>Aktion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code>-<code>9</code>, <code>A</code>-<code>F</code></td>
+<td>Byte am Cursor ändern, eine Hex-Ziffer nach der anderen (Hex-Bereich)</td>
+</tr>
+<tr>
+<td>druckbares Zeichen</td>
+<td>Byte ersetzen (ASCII-Bereich)</td>
+</tr>
+<tr>
+<td>Einfg (Insert)</td>
+<td>Zwischen Hex- und ASCII-Bereich wechseln</td>
+</tr>
+<tr>
+<td>Pfeiltasten</td>
+<td>Bewegen; Auf/Ab bewegt um eine Zeile</td>
+</tr>
+<tr>
+<td>Bild auf / Bild ab</td>
+<td>Um eine Bildschirmseite bewegen</td>
+</tr>
+<tr>
+<td>Pos1 / Ende</td>
+<td>Zeilenanfang / -ende; mit Strg: Pufferanfang / -ende</td>
+</tr>
+<tr>
+<td>Shift + Bewegung</td>
+<td>Auswahl erweitern</td>
+</tr>
+<tr>
+<td>Strg+A</td>
+<td>Alles markieren</td>
+</tr>
+<tr>
+<td>Strg+C / Strg+V</td>
+<td>Kopieren / Einfügen (Hex-Text <code>DE AD BE EF</code> im Hex-Bereich, Zeichen im ASCII-Bereich)</td>
+</tr>
+<tr>
+<td>Entf</td>
+<td>Auswahl mit FF füllen</td>
+</tr>
+<tr>
+<td>Strg+Z / Strg+Y</td>
+<td>Rückgängig / Wiederholen (der Verlauf wird beim Laden eines neuen Abbilds oder beim Ändern der Puffergröße gelöscht)</td>
+</tr>
+<tr>
+<td>Strg+F</td>
+<td>Hex-Bytes suchen; Strg+Umschalt+F Text suchen; F3 weitersuchen (springt am Ende nach vorn)</td>
+</tr>
+<tr>
+<td>Strg+G</td>
+<td>Zu Adresse springen (hex)</td>
+</tr>
+<tr>
+<td>Strg+B</td>
+<td>Auswahl als Brenn-Abschnitt übernehmen</td>
+</tr>
+</tbody>
+</table>
+<p>Die Größe des Puffers lässt sich nicht durch Tippen ändern, dafür gibt es <em>Resize buffer</em>.</p>
+<hr />
+<h2 id="10-prüfsummen">10. Prüfsummen</h2>
+<p>Das Feld <strong>Checksums</strong> (unten rechts) rechnet laufend neu. Bereich wählbar:</p>
+<ul>
+<li><strong>Whole buffer</strong> - gesamter Puffer</li>
+<li><strong>Selection</strong> - Auswahl</li>
+<li><strong>Burn section</strong> - Brenn-Abschnitt</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sum-8 (mod 256)</td>
+<td>Summe aller Bytes modulo 256</td>
+</tr>
+<tr>
+<td>Sum-8 two's complement</td>
+<td>Das Byte, das die 8-Bit-Summe zu null macht (Prüfbyte zum Ablegen im Abbild)</td>
+</tr>
+<tr>
+<td>Sum-16</td>
+<td>Summe aller Bytes modulo 65536</td>
+</tr>
+<tr>
+<td>XOR-8</td>
+<td>XOR aller Bytes</td>
+</tr>
+<tr>
+<td>CRC-8</td>
+<td>Polynom 0x07, Startwert 0, nicht gespiegelt</td>
+</tr>
+<tr>
+<td>CRC-16/CCITT-FALSE</td>
+<td>Polynom 0x1021, Startwert 0xFFFF</td>
+</tr>
+<tr>
+<td>CRC-16/XMODEM</td>
+<td>Polynom 0x1021, Startwert 0</td>
+</tr>
+<tr>
+<td>CRC-16/ARC (IBM)</td>
+<td>Polynom 0x8005 gespiegelt (0xA001), Startwert 0</td>
+</tr>
+<tr>
+<td>CRC-32 (IEEE 802.3)</td>
+<td>Das übliche CRC-32 von ZIP/Ethernet</td>
+</tr>
+</tbody>
+</table>
+<p>Prüfwerte für den ASCII-Text <code>123456789</code>: CRC-8 <code>F4</code>, CCITT-FALSE <code>29B1</code>, XMODEM <code>31C3</code>, ARC <code>BB3D</code>, CRC-32
+<code>CBF43926</code>. Ein Doppelklick auf eine Zeile kopiert den Wert in die Zwischenablage.</p>
+<hr />
+<h2 id="11-typische-abläufe">11. Typische Abläufe</h2>
+<p><strong>A. Eine Datei in ein 2708 brennen</strong></p>
+<ol>
+<li>Verbinden, <em>2708</em> wählen.</li>
+<li>File &gt; Open: <code>.bin</code>- oder <code>.hex</code>-Datei laden.</li>
+<li>Abschnitt unverändert lassen (Offset 0, Länge 400 hex = 1 KB).</li>
+<li>Leeren (UV-gelöschten) Baustein einsetzen, <strong>Write section</strong> klicken und bestätigen. Blank-Check und Verify
+   sind standardmäßig eingeschaltet.</li>
+</ol>
+<p><strong>B. Ein großes ROM-Abbild auf mehrere EPROMs aufteilen</strong></p>
+<ol>
+<li>Große Datei laden (zum Beispiel 4 KB) und die Bausteingröße wählen (zum Beispiel 2708 = 1 KB).</li>
+<li>Der Abschnitt zeigt Bank 1/4. Brennen, dann <strong>Bank ▶</strong> drücken, nächsten Baustein einsetzen und erneut
+   brennen. Jedes EPROM enthält die Bytes seiner Bank ab Adresse 0.</li>
+</ol>
+<p><strong>C. Mehrere Stücke einer Datei in einen Baustein brennen</strong></p>
+<ol>
+<li>Das erste Stück im Editor markieren und <strong>From selection</strong> (Strg+B) drücken; Baustein-Offset setzen.</li>
+<li>Für jedes weitere Stück <strong>Blank check before writing</strong> ausschalten und schreiben.</li>
+</ol>
+<p><strong>D. Aus mehreren EPROMs ein Abbild zusammensetzen</strong></p>
+<ol>
+<li>Häkchen <em>Read: insert into buffer at source offset</em> setzen.</li>
+<li>Quell-Offset auf die Stelle setzen, an die der erste Baustein kommt (z. B. 0), Baustein einsetzen, <strong>Read</strong>.</li>
+<li>Nächsten Quell-Offset setzen (z. B. 400), nächsten Baustein einsetzen, <strong>Read</strong>. Dann als BIN oder Intel-HEX
+   speichern.</li>
+</ol>
+<p><strong>E. Baustein mit einer Datei vergleichen</strong></p>
+<p>Datei laden, Abschnitt setzen, <strong>Verify section</strong> klicken. Abweichungen sind im Editor rot.</p>
+<hr />
+<h2 id="12-fehlersuche">12. Fehlersuche</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Ursache / Abhilfe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Portliste leer</td>
+<td>Kabel oder Treiber fehlt. Geräte-Manager prüfen; ↻ drücken.</td>
+</tr>
+<tr>
+<td>Nur <code>COMx</code> ohne Beschreibung</td>
+<td>Die Beschreibung wird von Windows (WMI) gelesen; auf eingeschränkten Systemen ist sie nicht verfügbar. Der Port funktioniert trotzdem.</td>
+</tr>
+<tr>
+<td>„Timeout - no response from the programmer“</td>
+<td>Falsche Baudrate, falscher Port oder der Programmer hat keine Versorgung. Boards, die beim Öffnen des Ports neu starten, brauchen zwei Sekunden; einmal neu verbinden.</td>
+</tr>
+<tr>
+<td>„Invalid response ...“</td>
+<td>Falsche Baudrate oder der Port gehört zu einem anderen Gerät.</td>
+</tr>
+<tr>
+<td>„Supply voltage outside the allowed range“</td>
+<td>12-V-Versorgung des Programmers prüfen; Bereich siehe <a href="#5-unterstützte-bausteine">Abschnitt 5</a>.</td>
+</tr>
+<tr>
+<td>„Programmer reports: no hardware (shield) detected“ / „wrong hardware“</td>
+<td>Das Shield für den gewählten Bausteintyp fehlt oder ist falsch, oder die Schalterstellung stimmt nicht.</td>
+</tr>
+<tr>
+<td>„Device is not blank“</td>
+<td>Der Baustein enthält Daten. Löschen (UV) oder den Blank-Check ausschalten, um darüber zu programmieren.</td>
+</tr>
+<tr>
+<td>Verify schlägt nach dem Schreiben fehl</td>
+<td>Schlechter Kontakt, gealterter Baustein, zu wenige Durchläufe (<strong>Passes</strong> erhöhen), falsche Spannung. Das erste abweichende Byte ist markiert.</td>
+</tr>
+<tr>
+<td>Das Schreiben dauert Minuten</td>
+<td>Normal bei EPROMs, die in 100 Durchläufen programmiert werden, siehe <em>Programmierdauer</em> in <a href="#8-programmer-funktionen">Abschnitt 8</a>. Eine höhere Baudrate verkürzt nur den Übertragungsanteil.</td>
+</tr>
+<tr>
+<td>Baustein mit falschem Abschnitt beschrieben</td>
+<td>Programmieren kann Bits nicht auf 1 zurücksetzen; der Baustein muss (bei EPROM-Typen) mit UV gelöscht werden.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="13-sicherheitshinweise">13. Sicherheitshinweise</h2>
+<ul>
+<li>Der Programmer erzeugt hohe Programmierspannungen. Bausteine nur einsetzen und entnehmen, wenn der Programmer
+  im Leerlauf ist und, falls die Hardware es verlangt, bei abgeschalteter Versorgung.</li>
+<li>Vor dem Schreiben Einbaulage des Bausteins sowie Shield- und Schaltereinstellungen prüfen.</li>
+<li>Ein Abbruch während des Schreibens kann einen teilweise programmierten Baustein hinterlassen.</li>
+<li>Bisher ist nur das 2708 an echter Hardware getestet; bei allen anderen Bausteintypen die Ergebnisse immer verifizieren.</li>
+</ul>
+<hr />
+<h2 id="14-protokoll-in-kürze-für-entwickler">14. Protokoll in Kürze (für Entwickler)</h2>
+<p>Serielle Verbindung 8N1, kein Handshake, Lese-Timeout 3 s. Jeder Befehl lautet <code>cmd, ~cmd, Argumente</code>. Der
+Programmer antwortet mit <code>cmd, Fehler</code>. Fehlercodes: <code>00</code> ok, <code>01</code> weiter (Dual-Socket), <code>02</code> fertig, <code>09</code> nicht
+leer; weitere sind Fehler (<code>03</code> ungültiger Befehl, <code>04</code> nicht unterstützt, <code>05</code> kein Shield, <code>06</code> falsches Shield,
+<code>07</code> falsche Schalterstellung, <code>0A</code> Wiederholungen überschritten).</p>
+<table>
+<thead>
+<tr>
+<th>Befehl</th>
+<th>Code</th>
+<th>Argumente</th>
+<th>Daten</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start write</td>
+<td><code>10</code></td>
+<td>Baustein, „bis gesetzt“-Flag, Wiederholungen</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Write chunk</td>
+<td><code>11</code></td>
+<td>8 Datenbytes (nach dem Kopf)</td>
+<td>Schlussantwort <code>02</code>, dann 5 Ergebnisbytes</td>
+</tr>
+<tr>
+<td>Start read</td>
+<td><code>12</code></td>
+<td>Baustein</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Read chunk</td>
+<td><code>13</code></td>
+<td>-</td>
+<td>8 Bytes nach der Antwort, Schlussantwort <code>02</code></td>
+</tr>
+<tr>
+<td>Start blank check</td>
+<td><code>14</code></td>
+<td>Baustein</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Blank check</td>
+<td><code>15</code></td>
+<td>-</td>
+<td><code>02</code> = leer, sonst 3 Bytes (Offset hoch, tief, Wert)</td>
+</tr>
+<tr>
+<td>Reset</td>
+<td><code>16</code></td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Measure 12 V</td>
+<td><code>17</code></td>
+<td>-</td>
+<td>2 Bytes, Big Endian, hundertstel Volt</td>
+</tr>
+</tbody>
+</table>
+<p>Bausteincodes: 1702A <code>00</code>, 2704 <code>01</code>, 2708 <code>02</code>, MCM6876x <code>03</code>, 8748 <code>04</code>, 8749 <code>05</code>, 8741 <code>06</code>, 8742 <code>07</code>,
+8048 <code>08</code>, 8049 <code>09</code>, 8050 <code>0A</code>, 8755 <code>0B</code>, 8041 <code>0C</code>, 8042 <code>0D</code>, TMS2716 <code>0E</code>.</p>
+<hr />
+<h2 id="15-bauen-version-lizenz-änderungen">15. Bauen, Version, Lizenz, Änderungen</h2>
+<p><strong>Quelldateien</strong></p>
+<table>
+<thead>
+<tr>
+<th>Datei</th>
+<th>Inhalt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Program.cs</code></td>
+<td>Einstiegspunkt</td>
+</tr>
+<tr>
+<td><code>MainForm.cs</code></td>
+<td>Hauptfenster und alle Funktionen</td>
+</tr>
+<tr>
+<td><code>HexEditor.cs</code></td>
+<td>Hex-Editor-Steuerelement</td>
+</tr>
+<tr>
+<td><code>Programmer.cs</code></td>
+<td>Serielles Protokoll und Bausteintabelle</td>
+</tr>
+<tr>
+<td><code>PortInfo.cs</code></td>
+<td>COM-Ports mit Namen aus dem Geräte-Manager</td>
+</tr>
+<tr>
+<td><code>Checksums.cs</code>, <code>IntelHex.cs</code></td>
+<td>Prüfsummen und Intel-HEX</td>
+</tr>
+<tr>
+<td><code>AppInfo.cs</code></td>
+<td>Programmname und Version</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Versionsnummer.</strong> Die Version wird an einer einzigen Stelle gesetzt: <code>&lt;Version&gt;</code> in <code>HvEpromGui.csproj</code>. Sie
+erscheint in der Titelleiste und unter <em>Help &gt; About</em>. Für jede neue Ausgabe dort erhöhen.</p>
+<p><strong>Lizenz.</strong> Die Protokollimplementierung ist von hvepromcmd von Matthew Millman abgeleitet (GPL v2 oder neuer);
+dieses Programm wird deshalb ebenfalls unter <strong>GPL-2.0-or-later</strong> weitergegeben.</p>
+<p><strong>Änderungen</strong></p>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Änderungen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>Erste nummerierte Ausgabe: alle Bausteintypen aus hvepromcmd, Hex-Editor mit anpassbarer Zeilenlänge, Rückgängig/Wiederholen, Suche, Prüfsummen (Summen und CRCs), BIN- und Intel-HEX-Dateien bis 16 MB, Abschnittsbrennen mit Bank-Navigation, Lesen in den Puffer, COM-Port-Namen aus dem Geräte-Manager, englische und deutsche Dokumentation. Mit 2708-EPROMs getestet (Lesen, Schreiben, Vergleichen). Fortschrittsanzeige mit verstrichener Zeit, geschätzter Restzeit und Gesamtzeit pro Funktion und Phase. Die Dokumentation öffnet sich als HTML-Seite im Webbrowser.</td>
+</tr>
+</tbody>
+</table>
+</main>
+</body>
+</html>

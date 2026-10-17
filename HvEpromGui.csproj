@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AssemblyName>HvEpromGui</AssemblyName>
+    <RootNamespace>HvEpromGui</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Product>HV-EPROM Programmer GUI</Product>
+    <Description>Windows front end for the HVEPROM EPROM programmer (hex editor, checksums, section burning)</Description>
+    <!-- Single place for the version number; shown in the title bar and the About box -->
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.Ports" Version="8.0.0" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Documentation is copied next to the executable (the Help menu opens the HTML pages in the browser) -->
+    <None Include="docs\**\*.html" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="docs\**\*.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

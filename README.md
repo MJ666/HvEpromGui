@@ -21,8 +21,39 @@ have not been tested on real hardware yet.
 
 ## Build
 
-.NET 8 SDK, Windows 10/11: `dotnet build -c Release`
+.NET 8 SDK, Windows 10/11:
+
+```
+dotnet build -c Release
+```
+
+## Documentation
+
+* English manual: [docs/MANUAL.en.md](docs/MANUAL.en.md)
+* Deutsches Handbuch: [docs/HANDBUCH.de.md](docs/HANDBUCH.de.md)
+
+The program's Help menu opens the same manuals as HTML pages in the web browser
+(`docs/MANUAL.en.html`, `docs/HANDBUCH.de.html`, generated from the Markdown files).
 
 ## License
 
-GPL-2.0-or-later. The serial protocol is derived from hvepromcmd by Matthew Millman.
+GPL-2.0-or-later. The serial protocol is derived from [hvepromcmd](https://github.com/inaxeon/hvepromcmd)
+by Matthew Millman.
+
+---
+
+## Deutsch
+
+Windows-Oberfläche für den HVEPROM-EPROM-Programmer von Matthew Millman. Sie ersetzt das Kommandozeilen-Tool
+durch ein grafisches Programm: EPROMs lesen, schreiben, auf Leerzustand prüfen und verifizieren, die Daten im
+Hex-Editor bearbeiten und gezielt einen Abschnitt einer großen Datei in einen Baustein brennen.
+
+**Funktionen:** Hex-Editor mit anpassbarer Zeilenlänge, Brennen von Abschnitten aus BIN-/Intel-HEX-Dateien bis
+16 MB, Prüfsummen (Summen, CRC-8/16/32), Messen/Blank-Check/Lesen/Schreiben/Verify mit Zeitanzeige,
+COM-Ports mit Geräte-Manager-Namen, alle Bausteintypen von hvepromcmd, Dokumentation auf Englisch und Deutsch.
+
+Getestet mit 2708-EPROMs (Lesen, Schreiben, Vergleichen). Die übrigen Bausteintypen folgen dem Protokoll von
+hvepromcmd, wurden aber noch nicht an echter Hardware getestet.
+
+**Bauen:** .NET 8 SDK, `dotnet build -c Release` · **Handbuch:** [docs/HANDBUCH.de.md](docs/HANDBUCH.de.md) ·
+**Lizenz:** GPL-2.0-or-later (Protokoll abgeleitet von hvepromcmd)
