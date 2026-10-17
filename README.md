@@ -29,8 +29,8 @@ dotnet build -c Release
 
 ## Documentation
 
-* English manual: [HvEpromGui/docs/MANUAL.en.md](docs/MANUAL.en.md)
-* Deutsches Handbuch: [HvEpromGui/docs/HANDBUCH.de.md](docs/HANDBUCH.de.md)
+* English manual: [HvEpromGui/docs/MANUAL.en.md](HvEpromGui/docs/MANUAL.en.md)
+* Deutsches Handbuch: [HvEpromGui/docs/HANDBUCH.de.md](HvEpromGui/docs/HANDBUCH.de.md)
 
 The program's Help menu opens the same manuals as HTML pages in the web browser
 (`docs/MANUAL.en.html`, `docs/HANDBUCH.de.html`, generated from the Markdown files).
@@ -55,5 +55,5 @@ COM-Ports mit Geräte-Manager-Namen, alle Bausteintypen von hvepromcmd, Dokument
 Getestet mit 2708-EPROMs (Lesen, Schreiben, Vergleichen). Die übrigen Bausteintypen folgen dem Protokoll von
 hvepromcmd, wurden aber noch nicht an echter Hardware getestet.
 
-**Bauen:** .NET 8 SDK, `dotnet build -c Release` · **Handbuch:** [HvEpromGui/docs/HANDBUCH.de.md](docs/HANDBUCH.de.md) ·
+**Bauen:** .NET 8 SDK, `dotnet build -c Release` · **Handbuch:** [HvEpromGui/docs/HANDBUCH.de.md](HvEpromGui/docs/HANDBUCH.de.md) ·
 **Lizenz:** GPL-2.0-or-later (Protokoll abgeleitet von hvepromcmd)
